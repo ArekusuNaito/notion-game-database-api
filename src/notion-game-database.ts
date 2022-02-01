@@ -22,15 +22,18 @@ export interface SecretFileProperties
 
 
 
-export default class GameDatabaseNotion
+export class GameDatabaseNotion
 {
     
     itemDatabaseID:string;
     gameDatabaseID:string;
     gameSeriesDatabaseID:string;
     notion:Client;
-    itemProperties:any;
-    constructor(secret:SecretFileProperties)
+    constructor()
+    {
+        
+    }
+    SetCredentials(secret:SecretFileProperties)
     {
         try
         {
@@ -45,13 +48,6 @@ export default class GameDatabaseNotion
         {
             console.error('Error creating Game Database API - Are credentials ok on secret file?');
         }
-        
-        
-    }
-    async Create()
-    {
-        this.itemProperties =await this.notion.databases.retrieve({database_id:this.itemDatabaseID});
-        // console.log(this.itemProperties)
     }
     SetItemsDB_ID(itemDatabaseID:string)
     {
@@ -288,6 +284,8 @@ export default class GameDatabaseNotion
             });
         console.log(pages.results.length);
     }
+
+    //TODO: ADD THE CASE WHEN A ROW IS EMPTY, BUT ADDED
     private async SimplifyQueryResult(pages:QueryDatabaseResponse)
     {
         
@@ -354,11 +352,16 @@ export default class GameDatabaseNotion
             //property.id = "Qdbd"
             //property.relation = [{}]
             //property.relation[0].id = the foreign key
-            //So we need to request for that
+            
             const relationForeignID = property.relation[0].id
-            let foreignPage:any = await this.notion.pages.retrieve({page_id:relationForeignID});
-            foreignPage = this.ProjectPage(foreignPage);
-            return await this.GetDataFromPropertyType(foreignPage.properties.Name);
+            return relationForeignID;
+            //So we need to request for that
+            // ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! 
+            //This code makes the request slow, because it makes more requests to get the game name
+            //To make the request to get the name: 👇
+            // let foreignPage:any = await this.notion.pages.retrieve({page_id:relationForeignID});
+            // foreignPage = this.ProjectPage(foreignPage);
+            // return await this.GetDataFromPropertyType(foreignPage.properties.Name);
         }
         else return null;
     }
@@ -370,3 +373,4 @@ export default class GameDatabaseNotion
 
 }
 
+export default new GameDatabaseNotion();
