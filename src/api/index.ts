@@ -7,16 +7,16 @@ let apiRoot = Router();
 
 //Import routers
 //Game Series
-import {rootRouteName as gameSeriesRouteName} from './gameSeries';
-import gameSeriesRouter from './gameSeries';
+import {rootRouteName as gameSeriesRouteName} from './routes/gameSeries';
+import gameSeriesRouter from './routes/gameSeries';
 
 //Games
-import {rootRouteName as gamesRouteName} from './games';
-import gamesRouter from './games';
+import {rootRouteName as gamesRouteName} from './routes/games';
+import gamesRouter from './routes/games';
 
 //Items
-import {rootRouteName as itemsRouteName} from './items';
-import itemsRouter from './items';
+import {rootRouteName as itemsRouteName} from './routes/items';
+import itemsRouter from './routes/items';
 
 
 

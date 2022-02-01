@@ -141,6 +141,7 @@ export class GameDatabaseNotion
         if(gameID)
         {
             // ee352af0-b1f7-4b0c-b523-afadf6a57f19
+            console.log(gameID);
             const queryResult = await this.notion.databases.query(
                 {
                     database_id:this.itemDatabaseID,
@@ -184,6 +185,51 @@ export class GameDatabaseNotion
             })
         return this.GetFirstIDFromQuery(pages);
     }
+
+    async GetAllGameSeries()
+    {
+        const gameListQuery = await this.notion.databases.query({database_id:this.gameSeriesDatabaseID});
+        return this.SimplifyQueryResult(gameListQuery);
+    }
+    async GetAllGames()
+    {
+        const gameListQuery = await this.notion.databases.query({database_id:this.gameDatabaseID});
+        return this.SimplifyQueryResult(gameListQuery);
+    }
+
+    async GetGameSeriesGivenName(gameSeriesName:string)
+    {
+        const gameListQuery = await this.notion.databases.query(
+        {
+            database_id:this.gameSeriesDatabaseID,
+            filter:
+            {
+                property:'Name',
+                title:
+                {
+                    contains:gameSeriesName
+                }
+            }
+        });
+        return this.SimplifyQueryResult(gameListQuery);
+    }
+
+    async GetGameGivenName(gameName:string)
+    {
+        const gameListQuery = await this.notion.databases.query(
+        {
+            database_id:this.gameDatabaseID,
+            filter:
+            {
+                property:'Name',
+                title:
+                {
+                    contains:gameName
+                }
+            }
+        });
+        return this.SimplifyQueryResult(gameListQuery);
+    }
     /**
      * 
      * Gets all games from a given game series.
@@ -211,7 +257,6 @@ export class GameDatabaseNotion
                         }
                     }
                 });
-            console.log(gameListQuery);
             try
             {
                 if(gameListQuery.results)return await this.SimplifyQueryResult(gameListQuery);
@@ -266,30 +311,9 @@ export class GameDatabaseNotion
        
     }
 
-    /**
-     * For testing purposes.
-     * This function was to test how to use the filter function like the actual notion app filter.
-     */
-    private async GetItemsWithQuery()
-    {
-        
-        const pages = await this.notion.databases.query(
-            {
-                database_id:this.itemDatabaseID,
-                filter:
-                {
-                    "property":"Name",
-                    "text":{equals:'Rare Candy'}
-                }
-            });
-        console.log(pages.results.length);
-    }
-
     //TODO: ADD THE CASE WHEN A ROW IS EMPTY, BUT ADDED
     private async SimplifyQueryResult(pages:QueryDatabaseResponse)
     {
-        
-
         //Custom map function but with normal for loop
         let simplifiedPages:any = []
         for(let index = 0;index<pages.results.length;index++)
@@ -353,8 +377,17 @@ export class GameDatabaseNotion
             //property.relation = [{}]
             //property.relation[0].id = the foreign key
             
-            const relationForeignID = property.relation[0].id
-            return relationForeignID;
+            try
+            {
+                const relationForeignID = property.relation[0].id   
+                return relationForeignID;
+            }
+            catch(error)
+            {
+                return null;
+            }
+            
+            
             //So we need to request for that
             // ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! 
             //This code makes the request slow, because it makes more requests to get the game name
@@ -373,4 +406,5 @@ export class GameDatabaseNotion
 
 }
 
+//This way we will only use one database object.
 export default new GameDatabaseNotion();

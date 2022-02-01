@@ -1,6 +1,8 @@
-import { Router } from "express";
-import database from '../notion-game-database';
+import { Response, Router } from "express";
+import database from '../../notion-game-database';
+import { notFoundHandler } from "../tools";
 
+export const rootRouteName = `/items`;
 let router = Router();
 
 router.use((request,response,next)=>
@@ -10,23 +12,24 @@ router.use((request,response,next)=>
     next();
 });
 
+
+
 router.get('/',async (request,response)=>
 {
     console.log('/items');
     const items = await database.GetItems();
-    response.json(items);
+    notFoundHandler(response,items);
 })
 /**
  * Get 1 item from the items database.
  * @param :itemName => The name of the item needed
  */
-router.get('/:itemName',(request,response)=>
+router.get('/:itemName',async (request,response)=>
 {
-    
-    response.send(`Item Name: ${request.params.itemName}`);
-
+    const item = await database.GetItemsByName(request.params.itemName);
+    notFoundHandler(response,item);
 })
 
 
-export const rootRouteName = `/items`;
+
 export default router;
