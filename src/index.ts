@@ -2,9 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import database from './notion-game-database'
 import api from './api';
-import {GraphQLList, GraphQLObjectType,GraphQLSchema, GraphQLString,GraphQLNonNull, GraphQLInt} from 'graphql';
 import { graphqlHTTP } from 'express-graphql';
-
+import { apiSchema } from './graphQL/';
 
 const hitomi =
 {
@@ -17,7 +16,7 @@ const hitomi =
 /**
  * Mock up data for Items and Games Databases.
  */
-const items =
+export const items =
 [
     {
         Name:'Red Potion',
@@ -31,7 +30,7 @@ const items =
     }
 ]
 
-const games =
+export const games =
 [
     {
         id:'dcba',
@@ -44,84 +43,6 @@ const games =
     }
 ]
 
-//#region Custom Object Types
-//In our case for -- mocking up, Game and Item
-const GameTypeQL = new GraphQLObjectType(
-{
-    name: 'Game',
-    description: `Game's data is stored here`,
-    //Fields are in upper case, because that's how the Notion App defines their data.
-    fields:()=>
-    ({
-        id:
-        {
-            type:new GraphQLNonNull(GraphQLString),
-        },
-        Name:
-        {
-            type:new GraphQLNonNull(GraphQLString),
-        },
-
-    })
-})
-
-
-const ItemTypeQL = new GraphQLObjectType(
-    {
-        name: 'Item',
-        description: `Item's data is stored here`,
-        //Fields are in upper case, because that's how the Notion App defines their data.
-        fields:()=>
-        ({
-            Name:
-            {
-                type:new GraphQLNonNull(GraphQLString),
-            },
-            Description:
-            {
-                type:new GraphQLNonNull(GraphQLString),
-            },
-            GameID:
-            {
-                type: new GraphQLNonNull(GraphQLString),
-                resolve:(source)=>source.Game
-            },
-            Game:
-            {
-                type: new GraphQLNonNull(GameTypeQL),
-                // resolve:(source)=>games.find(game=>game.id===source.Game)
-            }
-    
-        })
-    })
-//#endregion
-//#region Our Root Query object. This is {  }
-const RootTypeQL = new GraphQLObjectType(
-    {
-        name:'RootQuery',
-        description:'The root of the game database API',
-        fields:()=>
-        ({
-            items:{
-                type: new GraphQLList(ItemTypeQL),
-                description: 'List of All Items that exist in the game multiverse database.',
-                resolve:()=>items
-            },
-            games:
-            {
-                type: new GraphQLList(GameTypeQL),
-                description: 'List of All Games that exist in this database',
-                resolve:()=>games
-            }
-        })
-    });
-
-//#endregion
-
-//#region The Schema that defines our queries and mutations.
-//In this case we are just reading/consuming data.
-
-const apiSchema = new GraphQLSchema({query:RootTypeQL});
 
 
 
