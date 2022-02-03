@@ -1,10 +1,9 @@
-import express from 'express';
 import 'dotenv/config';
-const server = express();
-
+import express from 'express';
 import database from './notion-game-database'
-//Import API
 import api from './api';
+import { graphqlHTTP } from 'express-graphql';
+import { apiSchema } from './graphQL/';
 
 const hitomi =
 {
@@ -14,9 +13,52 @@ const hitomi =
     "gameSeriesDatabaseID":process.env.gameSeriesDatabaseID,
     "port":process.env.port
 }
+/**
+ * Mock up data for Items and Games Databases.
+ */
+export const items =
+[
+    {
+        Name:'Red Potion',
+        Description: 'A cool red potion',
+        Game: 'dcba',
+    },
+    {
+        Name:'Pick Me Up',
+        Description: 'Revive friends',
+        Game: 'abba',
+    }
+]
+
+export const games =
+[
+    {
+        id:'dcba',
+        Name:`Majora's Mask`,
+        
+    },
+    {
+        id:'abba',
+        Name:'Super Mario RPG',
+    }
+]
+
+
+
+
+//Setup
+const server = express();
+
+server.use('/graphql',graphqlHTTP(
+    { 
+        schema:apiSchema,
+        graphiql:true
+    }
+))
+
 
 //Everything in one single router for the sake of organization/legibilty
-server.use('/',api);
+// server.use('/',api);
 
 server.get('/ping',(request,response)=>
 {

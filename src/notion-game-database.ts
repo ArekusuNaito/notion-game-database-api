@@ -68,7 +68,7 @@ export class GameDatabaseNotion
         //remove the upper object, then we just return the results array
         
 
-        return await this.SimplifyQueryResult(pages);
+        return this.SimplifyQueryResult(pages);
     }
     async GetItemsByName(itemName:string)
     {
@@ -90,7 +90,7 @@ export class GameDatabaseNotion
         try
         {   if(query.results.length>0)
             {
-                return await this.SimplifyQueryResult(query);
+                return this.SimplifyQueryResult(query);
             }
             else return null;
             
@@ -100,6 +100,30 @@ export class GameDatabaseNotion
             return null;
         }
         
+    }
+    async GetItem(itemName:string)
+    {
+        const pages = await this.notion.databases.query(
+            {
+                database_id: this.itemDatabaseID,
+                filter:
+                {
+                    property:"Name",
+                    text:
+                    {
+                        contains:itemName
+                    }
+                }
+            })
+        try
+        {
+            const items = this.SimplifyQueryResult(pages);
+            return items[0];
+        }catch(error)
+        {
+            console.error(`Error getting Item - GetItem(${itemName}})`);
+            return null;
+        }
     }
     async GetIDFromGame(gameName:string)
     {
@@ -141,7 +165,6 @@ export class GameDatabaseNotion
         if(gameID)
         {
             // ee352af0-b1f7-4b0c-b523-afadf6a57f19
-            console.log(gameID);
             const queryResult = await this.notion.databases.query(
                 {
                     database_id:this.itemDatabaseID,
@@ -214,8 +237,19 @@ export class GameDatabaseNotion
         return this.SimplifyQueryResult(gameListQuery);
     }
 
+    async GetGameGivenID(gameID:string)
+    {
+        let gamePage:any = await this.notion.pages.retrieve(
+        {
+            page_id:gameID
+        });
+        gamePage = this.ProjectPage(gamePage);
+        return this.SimplifyPropertiesForPage(gamePage);
+    }
+
     async GetGameGivenName(gameName:string)
     {
+        
         const gameListQuery = await this.notion.databases.query(
         {
             database_id:this.gameDatabaseID,
@@ -228,7 +262,17 @@ export class GameDatabaseNotion
                 }
             }
         });
-        return this.SimplifyQueryResult(gameListQuery);
+        try
+        {
+            //TODO: Refactor this
+            //There's no need to send the whole thing.
+            //But this makes it work.
+            const games = this.SimplifyQueryResult(gameListQuery);
+            return games[0];
+        }catch(error)
+        {
+            return null;
+        }
     }
     /**
      * 
@@ -259,7 +303,7 @@ export class GameDatabaseNotion
                 });
             try
             {
-                if(gameListQuery.results)return await this.SimplifyQueryResult(gameListQuery);
+                if(gameListQuery.results)return this.SimplifyQueryResult(gameListQuery);
             }catch(error)
             {
                 console.log('Error simplyfing results from - GetAllGamesFromSeries()');
@@ -298,7 +342,7 @@ export class GameDatabaseNotion
             {
                 const currentItemPage = results[index];
                 let newPage:any = this.ProjectPage(currentItemPage);
-                newPage = await this.SimplifyPropertiesForPage(newPage);
+                newPage = this.SimplifyPropertiesForPage(newPage);
                 newPage.GameSeries = gameSeries;
                 simplifiedResults.push(newPage);
             }
@@ -312,7 +356,7 @@ export class GameDatabaseNotion
     }
 
     //TODO: ADD THE CASE WHEN A ROW IS EMPTY, BUT ADDED
-    private async SimplifyQueryResult(pages:QueryDatabaseResponse)
+    private SimplifyQueryResult(pages:QueryDatabaseResponse)
     {
         //Custom map function but with normal for loop
         let simplifiedPages:any = []
@@ -326,7 +370,7 @@ export class GameDatabaseNotion
             //Page properties have other nested properties.
             //We just want the actual raw data from the data fields from the notion table.
 
-            currentPage = await this.SimplifyPropertiesForPage(currentPage);
+            currentPage = this.SimplifyPropertiesForPage(currentPage);
             simplifiedPages.push(currentPage);
         }
         return simplifiedPages;
@@ -343,7 +387,7 @@ export class GameDatabaseNotion
         }
     }
 
-    private async SimplifyPropertiesForPage(pageItem:any)
+    private SimplifyPropertiesForPage(pageItem:any)
     {
         const pageProperties = pageItem.properties;
         // const pageName = pageProperties.Name.title[0].plain_text;
@@ -352,14 +396,14 @@ export class GameDatabaseNotion
         {
             const currentProperty = pageProperties[propertyName];
             // const propertyType = currentProperty.type;
-            newProperties[propertyName] = await this.GetDataFromPropertyType(currentProperty);
+            newProperties[propertyName] = this.GetDataFromPropertyType(currentProperty);
         }
         
         return newProperties;
 
         
     }
-    private async GetDataFromPropertyType(property:any)
+    private GetDataFromPropertyType(property:any)
     {
         if(property.type == 'title')return property.title[0].plain_text;
         //Rich can have many elements. This property has to be iterated if the text has styling. Bold/italics/etc
@@ -376,7 +420,6 @@ export class GameDatabaseNotion
             //property.id = "Qdbd"
             //property.relation = [{}]
             //property.relation[0].id = the foreign key
-            
             try
             {
                 const relationForeignID = property.relation[0].id   
@@ -386,15 +429,6 @@ export class GameDatabaseNotion
             {
                 return null;
             }
-            
-            
-            //So we need to request for that
-            // ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! 
-            //This code makes the request slow, because it makes more requests to get the game name
-            //To make the request to get the name: 👇
-            // let foreignPage:any = await this.notion.pages.retrieve({page_id:relationForeignID});
-            // foreignPage = this.ProjectPage(foreignPage);
-            // return await this.GetDataFromPropertyType(foreignPage.properties.Name);
         }
         else return null;
     }
