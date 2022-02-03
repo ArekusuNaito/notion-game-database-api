@@ -1,5 +1,5 @@
 import { GraphQLObjectType,GraphQLNonNull,GraphQLString, graphql, GraphQLList } from "graphql"
-import {items} from '../..';
+import database from "../../notion-game-database";
 import { ItemTypeQL } from "./ItemTypeQL";
 
 export const GameTypeQL = new GraphQLObjectType(
@@ -19,9 +19,10 @@ export const GameTypeQL = new GraphQLObjectType(
             Items:
             {
                 type:new GraphQLList(ItemTypeQL),
-                resolve:(sourceGame)=>
+                resolve:async (sourceGame)=>
                 {
-                    return items.filter(item=>item.Game==sourceGame.id)
+                    
+                    return await database.GetItemsByGame(sourceGame.Name);
                 }
             }
         })
