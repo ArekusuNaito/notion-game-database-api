@@ -4,6 +4,9 @@ import database from './notion-game-database'
 import api from './api';
 import { graphqlHTTP } from 'express-graphql';
 import { apiSchema } from './graphQL/';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 const hitomi =
 {
@@ -70,6 +73,8 @@ server.listen(hitomi.port,async ()=>
     try
     {
         database.SetCredentials(hitomi);
+        const items = await prisma.item.findMany();
+        console.log(items);
         console.log(`Server started: ${hitomi.port} ~ OK!`);
     }
     catch(error)
